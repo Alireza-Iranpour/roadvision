@@ -1,0 +1,29 @@
+optimizer:
+  name: adamw
+  lr: 2e-4
+  weight_decay: 1e-7
+
+lr_schedule:
+  name: cosine
+  warmup_steps: 500
+
+epochs: 30
+grad_accumulation_steps: 1
+amp: true
+
+distributed:
+  enabled: false  # set true / launch via torchrun for multi-GPU DDP
+  backend: nccl
+
+checkpoint:
+  dir: checkpoints/
+  save_every_n_epochs: 1
+  keep_last_n: 3
+  resume_path: null  # path to an epoch_XXXX.pt checkpoint, required by eval.evaluate
+
+logging:
+  backend: wandb  # set to "none" to disable experiment tracking entirely
+  project: roadvision
+  entity: null  # your W&B username/team; null uses the API key's default
+  mode: online  # wandb mode: online / offline / disabled
+  log_every_n_steps: 50

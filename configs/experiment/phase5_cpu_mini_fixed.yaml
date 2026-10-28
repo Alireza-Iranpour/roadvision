@@ -1,0 +1,36 @@
+# @package _global_
+# Same real-data CPU run as phase5_cpu_mini.yaml, with the two reliability
+# fixes from Phase 5's failure analysis applied (docs/RESULTS.md):
+#   1. Per-class detection heatmap loss normalization, addressing the
+#      measured ~127:1 car:trailer annotation imbalance in nuScenes-mini.
+#   2. Stronger photometric augmentation, targeting the day/night
+#      generalization gap (train split is 6 day / 2 night scenes; val
+#      includes a night+rain scene).
+#
+# Usage: python -m roadvision.training.train +experiment=phase5_cpu_mini_fixed
+
+training:
+  epochs: 2
+  grad_accumulation_steps: 1
+  amp: false
+  logging:
+    backend: none
+  checkpoint:
+    save_every_n_epochs: 1
+    keep_last_n: 2
+
+data:
+  dataloader:
+    batch_size: 2
+    num_workers: 0
+    pin_memory: false
+  augmentation:
+    photometric_jitter:
+      brightness: 0.5
+      contrast: 0.5
+      saturation: 0.3
+      hue: 0.05
+
+model:
+  detection_head:
+    per_class_loss_normalize: true

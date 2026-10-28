@@ -1,0 +1,42 @@
+# Model config, fully consumed by src/roadvision/models/roadvision_net.py.
+
+backbone:
+  name: resnet34
+  pretrained: true
+  out_channels: 512
+
+depth_head:
+  # Number of depth bins must match data.depth.dbound in configs/data/*.yaml.
+  num_depth_bins: 41
+  feature_channels: 64
+
+bev_encoder:
+  name: resnet_bev
+  in_channels: 64
+  out_channels: 256
+  num_blocks: [2, 2, 2]
+
+segmentation_head:
+  # Multi-label (independent sigmoid per class): lane sits on top of
+  # drivable_area, so classes are not mutually exclusive.
+  classes: [drivable_area, lane]
+  num_classes: 2
+  hidden_channels: 128
+
+detection_head:
+  classes: [car, truck, bus, trailer, construction_vehicle, pedestrian, motorcycle, bicycle, traffic_cone, barrier]
+  num_classes: 10
+  hidden_channels: 128
+  # Real nuScenes-mini class frequencies are heavily skewed (e.g. ~7600 "car"
+  # vs ~60 "trailer" annotations) -- per-class heatmap loss normalization
+  # (src/roadvision/losses/detection_loss.py) keeps rare classes from being
+  # drowned out by common ones. See docs/RESULTS.md for the before/after.
+  per_class_loss_normalize: true
+
+loss_weighting:
+  # Learned homoscedastic uncertainty weighting (Kendall et al.) across the
+  # three task losses, rather than fixed hand-tuned coefficients.
+  method: uncertainty_weighting
+  tasks: [depth, segmentation, detection]
+
+# in_channels for both heads must match bev_encoder.out_channels.

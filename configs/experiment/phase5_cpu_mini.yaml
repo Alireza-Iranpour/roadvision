@@ -1,0 +1,29 @@
+# @package _global_
+# Real end-to-end run on downloaded nuScenes-mini, CPU-only, reduced scale
+# so a full pass over the (tiny) train split completes in a reasonable
+# wall-clock time. Used for Phase 5 of docs/../plans/abstract-finding-petal.md.
+#
+# Usage: python -m roadvision.training.train +experiment=phase5_cpu_mini
+
+training:
+  epochs: 3
+  grad_accumulation_steps: 1
+  amp: false  # autocast is a no-op perf-wise on CPU and not worth the complexity here
+  logging:
+    backend: none
+  checkpoint:
+    save_every_n_epochs: 1
+    keep_last_n: 2
+
+data:
+  dataloader:
+    batch_size: 2
+    num_workers: 0
+    pin_memory: false
+
+model:
+  detection_head:
+    # Explicit baseline: matches the pre-fix global-normalization detection
+    # loss this config was first run with (docs/RESULTS.md). Compare against
+    # configs/experiment/phase5_cpu_mini_fixed.yaml.
+    per_class_loss_normalize: false

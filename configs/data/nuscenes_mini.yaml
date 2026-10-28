@@ -1,0 +1,64 @@
+# nuScenes-mini data config.
+#
+# To scale to the full dataset, override at the CLI or create a sibling
+# config (e.g. configs/data/nuscenes_full.yaml) that only changes
+# `dataroot` and `version` to "v1.0-trainval" -- everything else
+# (grid, bins, cameras, augmentation) is dataset-scale-independent.
+
+dataroot: data/nuscenes
+version: v1.0-mini
+
+# nuScenes-mini (10 scenes total) has no official train/val split the way
+# full nuScenes does, so one is fixed here by scene name for reproducibility.
+# Chosen to put one day + one night(+rain) scene in val, so failure analysis
+# can compare day/night generalization on both sides of the split -- 3 of
+# the 10 mini scenes are night (1077, 1094, 1100); 1094 is also "after rain".
+scene_split:
+  train_scenes:
+    [scene-0061, scene-0103, scene-0553, scene-0757, scene-0796, scene-0916, scene-1077, scene-1100]
+  val_scenes: [scene-0655, scene-1094]
+
+cameras:
+  - CAM_FRONT
+  - CAM_FRONT_RIGHT
+  - CAM_FRONT_LEFT
+  - CAM_BACK
+  - CAM_BACK_RIGHT
+  - CAM_BACK_LEFT
+
+# Raw nuScenes images are 1600x900. Images are resized+cropped to
+# final_dim (H, W) before the backbone.
+image:
+  raw_size: [900, 1600]   # H, W
+  final_dim: [256, 704]   # H, W
+  backbone_downsample: 16 # feature map is final_dim / backbone_downsample
+
+# BEV grid, in ego frame: x forward, y left, resolution in meters.
+bev_grid:
+  xbound: [-50.0, 50.0, 0.5]
+  ybound: [-50.0, 50.0, 0.5]
+  zbound: [-10.0, 10.0, 20.0]  # single z-bin: BEV collapses height
+
+# Discretized depth bins used by the per-camera depth-distribution head
+# and the lift-splat frustum (see src/roadvision/data/geometry.py).
+depth:
+  dbound: [4.0, 45.0, 1.0]  # [min_depth_m, max_depth_m, bin_size_m]
+
+augmentation:
+  resize_lim: [0.95, 1.1]
+  crop_jitter_px: 10
+  photometric_jitter:
+    brightness: 0.2
+    contrast: 0.2
+    saturation: 0.2
+    hue: 0.05
+  # BEV detection/segmentation targets encode absolute left/right (y) and
+  # yaw sign. A naive horizontal image flip mirrors handedness and requires
+  # mirroring the BEV targets + camera extrinsics in lockstep, so it is left
+  # disabled by default. See transforms.py for the caveat.
+  horizontal_flip_prob: 0.0
+
+dataloader:
+  batch_size: 4
+  num_workers: 8
+  pin_memory: true
